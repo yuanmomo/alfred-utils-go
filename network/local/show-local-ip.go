@@ -19,20 +19,27 @@ func init() {
 
 // Your workflow starts here
 func run() {
-	addrs, err := net.InterfaceAddrs()
+	interfaces, err := net.Interfaces()
 	if err != nil {
 		panic(err)
 	}
-	for _, addr := range addrs {
-		localIP := addr.String()
-		if strings.Contains(localIP,"::")  {
-			continue
+	for _, infs := range interfaces {
+		interfaceName := infs.Name
+		ips,err := infs.Addrs();
+		if err != nil {
+			panic(err)
 		}
-		if strings.Contains(localIP,"127.0.0.1")  {
-			continue
+		for _, ip := range ips {
+			localIP := ip.String()
+			if strings.Contains(localIP, "::") {
+				continue
+			}
+			if strings.Contains(localIP, "127.0.0.1") {
+				continue
+			}
+			localIP = strings.Split(localIP, "/")[0]
+			wf.NewItem(localIP).Valid(true).Arg(localIP).Subtitle(interfaceName)
 		}
-		localIP = strings.Split(localIP,"/")[0]
-		wf.NewItem(localIP).Valid(true).Arg(localIP)
 	}
 
 

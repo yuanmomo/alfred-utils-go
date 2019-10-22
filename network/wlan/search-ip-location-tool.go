@@ -47,7 +47,7 @@ func run() {
 
 	//fmt.Println(ip)
 	var jsonResult *IpResult
-	http_util.HttpGetJSON(url, &jsonResult)
+	common.HttpGetJSON(url, &jsonResult)
 
 	//fmt.Println(jsonResult)
 
