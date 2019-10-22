@@ -1,5 +1,3 @@
-# to be continue.....
-
 
 # What is this ?
 This is an Alfred workflow that contains some utils for developers :
@@ -9,8 +7,10 @@ This is an Alfred workflow that contains some utils for developers :
 * BASE64 encode/decode input string.
 * UrlEncode/UrlDecode input string.
 
-# Usage
+# Install
+[download](https://raw.githubusercontent.com/yuanmomo/alfred-utils-go/master/super-momo-tools.alfredworkflow) and double click to install
 
+# Usage
 ## ip && lip
 ![ip](https://img.tupm.net/2019/10/F971793758D0D96E9CEC6BBA8CF942B4.jpg)
 ![lip](https://img.tupm.net/2019/10/907D85B8C8D67D7EDCF9EDA67067C3A8.jpg)
