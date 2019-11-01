@@ -5,6 +5,10 @@ current_dir=$(cd "$(dirname "$0")";pwd)
 
 #readonly workflow_dir="${1}"
 workflow_dir=$(grep -i -r -l super-momo-tools /Users/MoMo/Dropbox/配置/Alfred-inuse-20190522/Alfred.alfredpreferences/workflows | sed "s/info\.plist//g")
+
+rm -rf  ${workflow_dir}/cache/*
+rm -rf  ${workflow_dir}/cache/*
+
 readonly info_plist="${workflow_dir}/info.plist"
 
 if [[ ! -f "${info_plist}" ]]; then

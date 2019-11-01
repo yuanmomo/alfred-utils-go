@@ -39,12 +39,10 @@ func (c *SearchIPLocationCommand) Description() Description {
 	}
 }
 
-
 var (
-	cacheName   = "ip-cache.json"      // Filename of cached repo list
-	maxCacheAge = 24 * time.Hour // How long to cache repo list for
+	cacheName   = "ip-cache.json" // Filename of cached repo list
+	maxCacheAge = 24 * time.Hour  // How long to cache repo list for
 )
-
 
 func (c *SearchIPLocationCommand) Execute(wf *aw.Workflow, args []string) *aw.Workflow {
 	var ip string
@@ -52,20 +50,21 @@ func (c *SearchIPLocationCommand) Execute(wf *aw.Workflow, args []string) *aw.Wo
 		ip = args[0]
 	}
 
-	log.Printf("[main] search ip=%s", ip)
+	log.Printf("[main] search ip=[%s], current cache dir:[%s]", ip, wf.Cache.Dir)
 
 	// check the input ip is valid
 	if ip != "" && ! common.IsIpV4(ip) {
-		wf.NewItem(fmt.Sprintf("Entering ip %s ...",ip)).Valid(true).Subtitle(ip)
+		log.Printf("Entering ip ....")
+		wf.NewItem(fmt.Sprintf("Entering ip %s ...", ip)).Valid(true).Subtitle(ip)
 		return wf
 	}
 
 	var jsonResult *IpApiResult
 
-	if ip == ""  { // search own ip location
+	if ip == "" { // search own ip location
 		searchOnline(ip, &jsonResult);
-		log.Print("Search online return : ", jsonResult)
-	}else {
+		log.Print("Search own location online with result : ", jsonResult)
+	} else {
 		// If the cache has expired, set Rerun (which tells Alfred to re-run the
 		// workflow), and start the background update process if it isn't already
 		// running.
@@ -85,13 +84,14 @@ func (c *SearchIPLocationCommand) Execute(wf *aw.Workflow, args []string) *aw.Wo
 			if res == nil || res.Query != ip {
 				continue
 			}
+			log.Print("Find in cache : ", jsonResult)
 			jsonResult = res;
 		}
 
 		if jsonResult == nil { // cannot find in local cache
 			// search online
 			searchOnline(ip, &jsonResult);
-			log.Print("Search online return : ", jsonResult)
+			log.Print("No cache, search online with result : ", jsonResult)
 			results = append(results, jsonResult);
 			wf.Cache.StoreJSON(cacheName, results);
 		}
@@ -100,25 +100,21 @@ func (c *SearchIPLocationCommand) Execute(wf *aw.Workflow, args []string) *aw.Wo
 	if jsonResult == nil {
 		title := fmt.Sprintf("Search error")
 		wf.NewItem(title).Valid(true).Arg(title).Subtitle(ip)
-	}else{
+	} else {
 		title := fmt.Sprintf("%s, %s, %s", jsonResult.Country, jsonResult.RegionName, jsonResult.City)
 		wf.NewItem(title).Valid(true).Arg(title).Subtitle(jsonResult.Query)
 	}
 
-
 	// Send results to Alfred
-	return  wf
+	return wf
 }
 
-func searchOnline(ip string,jsonResult interface{}) {
+func searchOnline(ip string, jsonResult interface{}) {
 	url := fmt.Sprintf("http://ip-api.com/json/%s?lang=zh-CN", ip)
 	log.Printf(ip)
 	common.HttpGetJSON(url, &jsonResult)
 }
 
-
 func init() {
 	RegisterCommand(&SearchIPLocationCommand{})
 }
-
-
