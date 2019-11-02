@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"alfred-utils-go/command"
+	_ "alfred-utils-go/command/go_json_to_struct"
 	"github.com/deanishe/awgo"
 )
 
