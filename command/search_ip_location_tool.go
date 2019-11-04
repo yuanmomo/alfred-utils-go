@@ -102,7 +102,7 @@ func (c *SearchIPLocationCommand) Execute(wf *aw.Workflow, args []string) *aw.Wo
 		wf.NewItem(title).Valid(true).Arg(title).Subtitle(ip)
 	} else {
 		title := fmt.Sprintf("%s, %s, %s", jsonResult.Country, jsonResult.RegionName, jsonResult.City)
-		wf.NewItem(title).Valid(true).Arg(title).Subtitle(jsonResult.Query)
+		wf.NewItem(title).Valid(true).Arg(title).Subtitle(fmt.Sprintf("%v, %v",jsonResult.Isp,jsonResult.Org))
 	}
 
 	// Send results to Alfred
