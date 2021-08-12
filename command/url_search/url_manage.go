@@ -21,7 +21,7 @@ func (c *UrlSearchCommand) Description() command.Description {
 		Short: "search url from configurations.",
 		Usage: []string{
 			"url add groupName url userName password",
-			"url search type keyword",
+			"url search groupNameRegex urlRegex",
 		},
 	}
 }
@@ -32,17 +32,18 @@ func (c *UrlSearchCommand) Execute(wf *aw.Workflow, args []string) *aw.Workflow 
 	}
 
 	optionType := args[0]
-	params := args[1:]
 
-	log.Printf("[%s] url [%s]", optionType, params)
+	//log.Printf("[%s] url", optionType)
 
 	config := Read(wf, fileName)
 
 	switch optionType {
 	case "add":
+		addParams := args[1:]
+
 		var newUrl Url
 		var groupName string
-		for index, value := range params {
+		for index, value := range addParams {
 			switch index {
 			case 0:
 				groupName = value
@@ -58,13 +59,33 @@ func (c *UrlSearchCommand) Execute(wf *aw.Workflow, args []string) *aw.Workflow 
 		}
 		Add(config, groupName, newUrl)
 		config.Write(wf, fileName)
-		fmt.Printf("Add success!!!\n", )
+
 	case "search":
+		if len(args) == 1 {
+			// no search param or search by groupName, show groupList name list
+			groupList := ListGroup(config)
+			log.Printf("list group result [%s] ", groupList)
+			for _, groupName := range groupList {
+				wf.NewItem(groupName).Valid(false).Subtitle("Enter to select group").Autocomplete(groupName)
+			}
+			return wf
+		}
 
-		log.Print(string(output))
-		wf.NewItem(string(output)).Valid(true).Arg(string(output)).Subtitle("Generated, press enter to copy!!")
+		// search url with groupName and urlRegex
+		groupNameRegex := fmt.Sprintf(".*%s.*", args[1])
+		urlRegex := ".*"
+		if len(args) >= 3 {
+			urlRegex = fmt.Sprintf(".*%s.*", args[2])
+		}
+		urlListMap := SearchUrl(config, groupNameRegex, urlRegex)
+		//log.Printf("search url result [%s] with param:[%s : %s]", urlListMap, groupNameRegex, urlRegex)
+		for groupName, urlList := range urlListMap {
+			for _, url := range urlList {
+				urlInfo := fmt.Sprintf("%s %s %s", url.URL, url.Username, url.Password)
+				wf.NewItem(urlInfo).Valid(true).Arg(urlInfo).Subtitle(groupName)
+			}
+		}
 	}
-
 	return wf
 }
 
