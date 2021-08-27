@@ -9,6 +9,7 @@ import (
 )
 
 const fileName = "url.json"
+const dbFileName = "url.db"
 
 type UrlSearchCommand struct{}
 
