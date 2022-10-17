@@ -16,4 +16,4 @@ if [[ ! $(command -v upx) ]]; then
 fi
 
 cd ${workflow_dir}/exec/
-ls | xargs upx
+ls | xargs upx --best
