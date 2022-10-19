@@ -5,7 +5,9 @@ import (
 	"alfred-utils-go/common"
 	"fmt"
 	aw "github.com/deanishe/awgo"
+	mapset "github.com/deckarep/golang-set"
 	"log"
+	"time"
 )
 
 type ParcelResult struct {
@@ -39,6 +41,11 @@ func (c *QueryParcelCommand) Name() string {
 	return "parcel"
 }
 
+var (
+	orderCacheName   = "order-info-cache.json" // Filename of cached repo list
+	orderMaxCacheAge = 7 * 24 * time.Hour      // How long to cache repo list for
+)
+
 func (c *QueryParcelCommand) Description() Description {
 	return Description{
 		Short: "Query the parcel info to Sweden.",
@@ -49,40 +56,77 @@ func (c *QueryParcelCommand) Description() Description {
 }
 
 func (c *QueryParcelCommand) Execute(wf *aw.Workflow, args []string) *aw.Workflow {
-	if len(args) <= 0 {
-		return wf
-	}
-
 	var orderNumber string
 	if len(args) >= 1 { // has order number arg
 		orderNumber = args[0]
 	}
 
-	log.Printf("Query parcel of order [%s]", orderNumber)
+	log.Printf("[main] Query parcel of order=[%s], current cache dir:[%s]  [%s]", orderNumber, wf.Cache.Dir)
+
+	// check the input ip is valid
+	if orderNumber != "" && len(orderNumber) != 18 {
+		log.Printf("Entering order number ....")
+		wf.NewItem(fmt.Sprintf("Entering order number %s ...", orderNumber)).Valid(true).Subtitle(orderNumber)
+		return wf
+	}
 
 	var jsonResult *ParcelResult
 	results := []*ParcelResult{}
 
-	if orderNumber != "" { // search own ip location
-		if jsonResult == nil { // cannot find in local cache
-			// search online
-			getParcelInfo(orderNumber, &jsonResult)
-			log.Print("Search online with result : ", jsonResult)
-			results = append(results, jsonResult)
+	orderNumberList := []string{}
+	if orderNumber == "" {
+		if wf.Cache.Expired(orderCacheName, orderMaxCacheAge) {
+			wf.ClearCache()
 		}
-	}
 
-	if jsonResult == nil || jsonResult.Status == 0 {
-		title := fmt.Sprintf(jsonResult.Info)
-		wf.NewItem(title).Valid(true).Arg(title).Subtitle(orderNumber)
+		log.Print("List order numbers in cache")
+
+		if wf.Cache.Exists(orderCacheName) {
+			if err := wf.Cache.LoadJSON(orderCacheName, &orderNumberList); err != nil {
+				wf.FatalError(err)
+			} else {
+				for _, orderNumber := range orderNumberList {
+					title := fmt.Sprintf("%s", orderNumber)
+					wf.NewItem(title).Valid(false).Arg(title).Subtitle(title).Autocomplete(title)
+				}
+			}
+		}
+		return wf
 	} else {
-		// append shipment info
+		if orderNumber != "" { // search by order number
+			if jsonResult == nil {
+				// search online
+				getParcelInfo(orderNumber, &jsonResult)
+				log.Print("Search online with result : ", jsonResult)
+				results = append(results, jsonResult)
+			}
+		}
 
-		// append traces
-		traces := jsonResult.Data.Shipment.Traces
-		for _, trace := range traces {
-			title := fmt.Sprintf("%s", trace.Info)
-			wf.NewItem(title).Valid(false).Arg(title).Subtitle(fmt.Sprintf("%s", trace.Time))
+		if jsonResult == nil || jsonResult.Status == 0 {
+			title := fmt.Sprintf(jsonResult.Info)
+			wf.NewItem(title).Valid(false).Arg(title).Subtitle(orderNumber)
+		} else {
+			// append traces
+			traces := jsonResult.Data.Shipment.Traces
+			for _, trace := range traces {
+				title := fmt.Sprintf("%s", trace.Info)
+				wf.NewItem(title).Valid(false).Arg(title).Subtitle(fmt.Sprintf("%s", trace.Time))
+			}
+
+			// Fetch success
+			if wf.Cache.Exists(orderCacheName) {
+				wf.Cache.LoadJSON(orderCacheName, &orderNumberList)
+			}
+
+			existOrderNumberList := mapset.NewSet()
+			if len(orderNumberList) > 0 {
+				for _, orderNumberTemp := range orderNumberList {
+					existOrderNumberList.Add(orderNumberTemp)
+				}
+			}
+			existOrderNumberList.Add(orderNumber)
+
+			wf.Cache.StoreJSON(orderCacheName, existOrderNumberList)
 		}
 	}
 
