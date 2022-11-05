@@ -24,7 +24,7 @@ func (d *DomainExtractCommand) Description() Description {
 }
 
 func (c *DomainExtractCommand) Execute(wf *aw.Workflow, args []string) *aw.Workflow {
-	if len(args) <= 1 {
+	if len(args) < 1 {
 		return wf
 	}
 
@@ -41,13 +41,13 @@ func (c *DomainExtractCommand) Execute(wf *aw.Workflow, args []string) *aw.Workf
 		log.Fatal(err)
 		return wf
 	}
-	var resultList []string
 
-	resultList = append(resultList,u.Hostname());
+	// Hostname
+	wf.NewItem(u.Hostname()).Valid(true).Arg(u.Hostname()).Subtitle(inputUrl)
 
-	for _,result := range resultList {
-		wf.NewItem(result).Valid(true).Arg(result).Subtitle(inputUrl)
-	}
+	// Hostname + path
+	hostPath := Sprintf("%s%s", u.Hostname(), u.Path)
+	wf.NewItem(hostPath).Valid(true).Arg(hostPath).Subtitle(inputUrl)
 
 	return wf
 }

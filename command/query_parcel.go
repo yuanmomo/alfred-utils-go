@@ -71,7 +71,6 @@ func (c *QueryParcelCommand) Execute(wf *aw.Workflow, args []string) *aw.Workflo
 	}
 
 	var jsonResult *ParcelResult
-	results := []*ParcelResult{}
 
 	orderNumberList := []string{}
 	if orderNumber == "" {
@@ -98,7 +97,6 @@ func (c *QueryParcelCommand) Execute(wf *aw.Workflow, args []string) *aw.Workflo
 				// search online
 				getParcelInfo(orderNumber, &jsonResult)
 				log.Print("Search online with result : ", jsonResult)
-				results = append(results, jsonResult)
 			}
 		}
 
