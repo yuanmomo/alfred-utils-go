@@ -8,6 +8,7 @@ echo "workflow_dir : ${workflow_dir}"
 current_dir=$(cd "$(dirname "$0")";pwd)
 
 # build flags
+export CGO_ENABLED=1
 go build -ldflags "-s -w"  -o ${workflow_dir}/exec/momo-util  ${current_dir}/../
 
 # upx compress the files

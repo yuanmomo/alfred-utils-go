@@ -15,7 +15,7 @@ all: clean release
 
 darwin:
 	cd ${CURRENT_DIR}; \
-	GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o build/${BINARY}-darwin-${GOARCH} . ;
+	CGO_ENABLED=1 GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o build/${BINARY}-darwin-${GOARCH} . ;
 
 clean:
 	-rm -fr build
